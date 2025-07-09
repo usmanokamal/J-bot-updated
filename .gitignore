@@ -4,3 +4,4 @@ uvicorn_service.py
 start_uvicorn.bat
 .python-version
 __pycache__/
+app/__pycache__/
