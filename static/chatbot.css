@@ -296,6 +296,10 @@ body {
   color: #ffc107;
   text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
+.robot-kms {
+  color: #ff0707;
+  text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
 
 /* Input Area */
 .input-area {

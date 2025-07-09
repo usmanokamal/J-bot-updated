@@ -282,7 +282,7 @@
     // Add initial bot message
     setTimeout(() => {
       appendMessage(
-        "Hello! I'm your Jazz Support Bot powered by AI. How can I help you today?",
+        "Hello! I'm your JazzBot. How can I help you today?",
         "bot"
       );
     }, 500);
