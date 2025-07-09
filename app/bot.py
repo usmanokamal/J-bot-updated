@@ -125,7 +125,9 @@ chat_engine = index.as_chat_engine(
         " Guide user about Jazz packages, offers, data offers, complaints, and SOPs."
         " Here are the relevant documents for the context:\n"
         "{context_str}"
-        "\nInstruction: Based on the above documents, provide a detailed answer for the user question below."
+        "\nInstruction: Based on the above documents, provide a detailed answer for the user question below from the documents."
+        "\nIf user question is not related to Jazz or the documents, respond with: 'Sorry, I don't have that information.'"
+        "\nIf user gives a USSD code, respond with the service name and details for that USSD code from the context/knowledgebase."
     )
 )
 
