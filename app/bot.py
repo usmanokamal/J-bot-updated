@@ -174,7 +174,7 @@ chat_engine = index.as_chat_engine(
         "\nInstruction: Based on the above documents, provide a detailed answer for the user question below from the documents."
         "\nIf user question is not related to Jazz or the documents, respond with: 'Sorry, I don't have that information.'"
         "\nIf user gives a USSD code, respond with the service name and details for that USSD code from the context/knowledgebase."
-        "\nKeep your response to around 200 words maximum, and ensure it is concise and relevant."
+        "\nKeep your response to around 150 words maximum, and ensure it is concise and relevant."
     ),
 )
 
