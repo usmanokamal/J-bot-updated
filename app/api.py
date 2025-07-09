@@ -2,8 +2,23 @@ import asyncio
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from app.bot import chat as bot_chat
+from pydantic import BaseModel
 
 router = APIRouter()
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: str  # You can ignore or use this as needed
+
+@router.post("/chat/")
+@router.post("/chat")
+async def chat_post(request: ChatRequest):
+    # Get the full reply as a string (not streamed for UI)
+    response = ""
+    async for chunk in bot_chat(request.message):
+        response += chunk
+    return {"response": response}
+
 
 @router.get("/chat/")
 async def chat(prompt: str):

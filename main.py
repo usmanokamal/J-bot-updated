@@ -8,7 +8,10 @@ from llama_index.core import VectorStoreIndex
 import cProfile
 import pstats
 import io
-
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -33,6 +36,18 @@ app.add_middleware(
 #     global indexes
 #     indexes = generate_indexes(csv_path=csv_path)
 #     print("Indexes updated")
+
+# --- Serve Static and Template Files ---
+# Mount static files (CSS, JS, images)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+# Setup Jinja2 template directory
+templates = Jinja2Templates(directory="templates")
+
+# --- Serve Frontend (index.html) ---
+@app.get("/", response_class=HTMLResponse)
+async def serve_frontend(request: Request):
+    # Serves your chatbot UI at root URL
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.on_event("startup")
 def startup_event():
