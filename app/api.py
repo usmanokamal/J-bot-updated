@@ -1,41 +1,89 @@
 import asyncio
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from app.bot import chat as bot_chat
 from pydantic import BaseModel
+import json
 
 router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str  # You can ignore or use this as needed
+    session_id: str
 
 @router.post("/chat/")
 @router.post("/chat")
-async def chat_post(request: ChatRequest):
-    # Get the full reply as a string (not streamed for UI)
-    response = ""
-    async for chunk in bot_chat(request.message):
-        response += chunk
-    return {"response": response}
-
-
-@router.get("/chat/")
-async def chat(prompt: str):
-    # Asynchronous generator to yield streaming data
+async def chat_post(request: ChatRequest, http_request: Request):
+    """Real-time streaming endpoint that respects abort signals"""
+    
     async def generate():
         try:
-            # # Ensure single iteration over the asynchronous generator
-            # stream_response = bot_chat(prompt)  # Create a new instance for each iteration
-
-            # async for response in stream_response:
-            #     yield response.encode("utf-8")
-            #     await asyncio.sleep(0.1)  # Simulate processing time
-            async for text in bot_chat(prompt):
-                yield text.encode("utf-8")  # Yield each response as it comes
+            full_response = ""
+            async for chunk in bot_chat(request.message):
+                # Check if client disconnected
+                if await http_request.is_disconnected():
+                    print("Client disconnected, stopping response generation")
+                    return
                 
+                full_response += chunk
+                
+                # Send chunk as JSON for easier parsing on frontend
+                chunk_data = {
+                    "chunk": chunk,
+                    "type": "content"
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+                
+                # Small delay to prevent overwhelming the client
+                await asyncio.sleep(0.01)
+            
+            # Send completion signal
+            completion_data = {
+                "type": "complete",
+                "full_response": full_response
+            }
+            yield f"data: {json.dumps(completion_data)}\n\n"
+            
+        except asyncio.CancelledError:
+            # Handle cancellation gracefully
+            stop_data = {
+                "type": "stopped",
+                "message": "Response stopped by user"
+            }
+            yield f"data: {json.dumps(stop_data)}\n\n"
+            return
         except Exception as e:
-            # Handle exceptions gracefully
+            # Handle other exceptions
+            error_data = {
+                "type": "error",
+                "message": f"An error occurred: {str(e)}"
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+
+    return StreamingResponse(
+        generate(), 
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
+
+@router.get("/chat/")
+async def chat_get(prompt: str, request: Request):
+    """GET endpoint for streaming (keeping for compatibility)"""
+    
+    async def generate():
+        try:
+            async for text in bot_chat(prompt):
+                if await request.is_disconnected():
+                    return
+                yield text.encode("utf-8")
+                await asyncio.sleep(0.01)
+        except asyncio.CancelledError:
+            yield b"Response stopped by user"
+        except Exception as e:
             yield f"An error occurred: {str(e)}".encode("utf-8")
 
     return StreamingResponse(generate(), media_type="text/plain")

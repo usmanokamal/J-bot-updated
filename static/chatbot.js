@@ -1,8 +1,9 @@
 // static/chatbot.js
 (function () {
-  let currentController = null; // Store the AbortController
-  let sessionId = generateSessionId(); // Generate session ID
-  let currentView = "web"; // Track current view state
+  let currentController = null;
+  let sessionId = generateSessionId();
+  let currentView = "web";
+  let currentMessageElement = null; // Track current message being typed
 
   function generateSessionId() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -64,38 +65,25 @@
     stopTypingAnimation();
   }
 
-  // Typewriter effect for bot replies, with logging
-  function typewriterEffect(fullText, element, doneCallback) {
-    let i = 0;
-    function type() {
-      let partial = fullText.slice(0, i);
-      let formatted = partial
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\n/g, "<br>");
-      element.html(formatted);
-      $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
-
-      if (i < fullText.length) {
-        i++;
-        setTimeout(type, 10); // 25ms for visible debugging, can reduce later
-      } else if (doneCallback) {
-        doneCallback();
-      }
-    }
-    type();
+  function formatText(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(
+        /^### (.*$)/gm,
+        "<h3 style='font-size: 1.2em; font-weight: bold; margin: 10px 0 5px 0;'>$1</h3>"
+      )
+      .replace(
+        /^## (.*$)/gm,
+        "<h2 style='font-size: 1.4em; font-weight: bold; margin: 12px 0 6px 0;'>$1</h2>"
+      )
+      .replace(
+        /^# (.*$)/gm,
+        "<h1 style='font-size: 1.6em; font-weight: bold; margin: 15px 0 8px 0;'>$1</h1>"
+      )
+      .replace(/\n/g, "<br>");
   }
 
-  // Function to send a message
-  function sendMessage() {
-    console.log("sendMessage called");
-    const input = $("#user-input");
-    const userMsg = input.val().trim();
-    if (!userMsg) return;
-
-    appendMessage(userMsg, "user");
-    input.val("");
-    disableUI();
-
+  function createBotMessage() {
     const bubble = $("<div>").addClass("chat-bubble").addClass("bot");
     const logo = $("<img>")
       .attr("src", "/static/assets/Jazz-Company-logo-.png")
@@ -107,12 +95,30 @@
     $("#chat-box").append(bubble);
     $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
 
-    const language = $("#language-select").val();
+    return messageContent;
+  }
 
+  // Function to send a message with real-time streaming
+  function sendMessage() {
+    console.log("sendMessage called");
+    const input = $("#user-input");
+    const userMsg = input.val().trim();
+    if (!userMsg) return;
+
+    appendMessage(userMsg, "user");
+    input.val("");
+    disableUI();
+
+    // Create bot message container
+    currentMessageElement = createBotMessage();
+    let accumulatedText = "";
+
+    const language = $("#language-select").val();
     currentController = new AbortController();
     const signal = currentController.signal;
 
     console.log("Sending fetch to /chat...");
+
     fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -123,33 +129,86 @@
       }),
       signal: signal,
     })
-      .then((response) => {
+      .then(async (response) => {
         console.log("Fetch response received");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json(); // Expect JSON
-      })
-      .then((data) => {
-        console.log("Data after JSON:", data);
-        if (data && data.response) {
-          console.log("Calling typewriterEffect!");
-          typewriterEffect(data.response, messageContent, enableUI);
-        } else {
-          messageContent.html("<em>No response from bot.</em>");
-          enableUI();
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            console.log("Stream complete");
+            break;
+          }
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.substring(6));
+
+                if (data.type === "content") {
+                  // Real-time streaming: immediately append each chunk
+                  accumulatedText += data.chunk;
+                  if (currentMessageElement) {
+                    currentMessageElement.html(formatText(accumulatedText));
+                    $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+                  }
+                } else if (data.type === "complete") {
+                  console.log("Response complete");
+                  enableUI();
+                } else if (data.type === "stopped") {
+                  console.log("Response stopped");
+                  if (currentMessageElement) {
+                    accumulatedText += "\n\n[Response stopped by user]";
+                    currentMessageElement.html(formatText(accumulatedText));
+                  }
+                  enableUI();
+                } else if (data.type === "error") {
+                  console.log("Error received:", data.message);
+                  if (currentMessageElement) {
+                    currentMessageElement.html(
+                      `<em>Error: ${data.message}</em>`
+                    );
+                  }
+                  enableUI();
+                }
+              } catch (e) {
+                console.log("Error parsing JSON:", e);
+              }
+            }
+          }
         }
       })
       .catch((error) => {
         console.log("Error in fetch:", error);
-        bubble.remove();
-        appendMessage("Error: " + error.message, "bot");
+        if (error.name === "AbortError") {
+          console.log("Request was aborted");
+          if (currentMessageElement) {
+            const currentText = currentMessageElement.text();
+            currentMessageElement.html(
+              formatText(currentText + "\n\n[Response stopped by user]")
+            );
+          }
+        } else {
+          if (currentMessageElement) {
+            currentMessageElement.html(`<em>Error: ${error.message}</em>`);
+          }
+        }
         enableUI();
       });
   }
 
   function stopResponse() {
     if (currentController) {
+      console.log("Stopping response...");
       currentController.abort();
       currentController = null;
     }
@@ -236,6 +295,5 @@
     });
     $("#send-btn").click(sendMessage);
     $("#stop-btn").click(stopResponse);
-    // No need for $("#view-toggle-btn").click(toggleView); since onclick is used in HTML
   });
 })();
