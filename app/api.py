@@ -4,6 +4,10 @@ from fastapi.responses import StreamingResponse
 from app.bot import chat as bot_chat
 from pydantic import BaseModel
 import json
+import csv
+import os
+from datetime import datetime
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -11,6 +15,15 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     session_id: str
+
+
+class FeedbackRequest(BaseModel):
+    message_id: str
+    user_message: str
+    bot_response: str
+    feedback: str  # "good" or "bad"
+    session_id: str
+    timestamp: str
 
 
 @router.post("/chat/")
@@ -78,3 +91,47 @@ async def chat_get(prompt: str, request: Request):
             yield f"An error occurred: {str(e)}".encode("utf-8")
 
     return StreamingResponse(generate(), media_type="text/plain")
+
+
+@router.post("/feedback")
+async def submit_feedback(request: FeedbackRequest):
+    """Store user feedback in CSV file"""
+    try:
+        # Define CSV file path
+        csv_file_path = "feedback.csv"
+
+        # Check if file exists, if not create it with headers
+        file_exists = os.path.isfile(csv_file_path)
+
+        # Prepare data row
+        feedback_data = {
+            "timestamp": request.timestamp,
+            "message_id": request.message_id,
+            "session_id": request.session_id,
+            "user_message": request.user_message,
+            "bot_response": request.bot_response,
+            "feedback": request.feedback,
+        }
+
+        # Write to CSV file
+        with open(csv_file_path, mode="a", newline="", encoding="utf-8") as file:
+            fieldnames = [
+                "timestamp",
+                "message_id",
+                "session_id",
+                "user_message",
+                "bot_response",
+                "feedback",
+            ]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+
+            # Write header if file is new
+            if not file_exists:
+                writer.writeheader()
+
+            writer.writerow(feedback_data)
+
+        return {"status": "success", "message": "Feedback stored successfully"}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to store feedback: {str(e)}"}

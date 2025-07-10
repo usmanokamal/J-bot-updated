@@ -16,12 +16,16 @@
     );
   }
 
-  function appendMessage(text, sender) {
+  // Modified appendMessage function to include feedback for bot messages
+  function appendMessage(text, sender, messageId = null) {
     let bubble = $("<div>").addClass("chat-bubble").addClass(sender);
 
     if (sender === "bot") {
+      const messageWrapper = $("<div>").addClass("bot-message-wrapper");
+
+      const contentContainer = $("<div>").addClass("bot-content-container");
       const logo = $("<img>")
-        .attr("src", "/static/assets/Jazz-Company-logo-.png")
+        .attr("src", "/static/assets/jazzbot-logo.png")
         .attr("alt", "Jazz Logo")
         .css({ width: "24px", height: "24px", marginRight: "10px" });
 
@@ -30,9 +34,24 @@
         .replace(/\n/g, "<br>");
 
       const messageContent = $("<span>").html(formattedText);
-      bubble.append(logo).append(messageContent);
+      contentContainer.append(logo).append(messageContent);
+      messageWrapper.append(contentContainer);
+
+      // Add feedback buttons for bot messages at the end
+      if (messageId) {
+        const feedbackButtons = createFeedbackButtons(
+          messageId,
+          window.lastUserMessage,
+          text
+        );
+        messageWrapper.append(feedbackButtons);
+      }
+
+      bubble.append(messageWrapper);
     } else {
       bubble.text(text);
+      // Store user message for feedback context
+      window.lastUserMessage = text;
     }
 
     $("#chat-box").append(bubble);
@@ -81,19 +100,31 @@
       .replace(/\n/g, "<br>");
   }
 
-  function createBotMessage() {
+  function createBotMessage(messageId) {
     const bubble = $("<div>").addClass("chat-bubble").addClass("bot");
+    const messageWrapper = $("<div>").addClass("bot-message-wrapper");
+
+    const contentContainer = $("<div>").addClass("bot-content-container");
     const logo = $("<img>")
-      .attr("src", "/static/assets/Jazz-Company-logo-.png")
+      .attr("src", "/static/assets/jazzbot-logo.png")
       .attr("alt", "Jazz Logo")
       .css({ width: "24px", height: "24px", marginRight: "10px" });
 
     const messageContent = $("<span>");
-    bubble.append(logo).append(messageContent);
+    contentContainer.append(logo).append(messageContent);
+    messageWrapper.append(contentContainer);
+
+    // Add placeholder for feedback buttons at the end
+    const feedbackContainer = $("<div>").addClass(
+      "feedback-container-placeholder"
+    );
+    messageWrapper.append(feedbackContainer);
+
+    bubble.append(messageWrapper);
     $("#chat-box").append(bubble);
     $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
 
-    return messageContent;
+    return { messageContent, feedbackContainer };
   }
 
   // Function to send a message with real-time streaming
@@ -107,8 +138,12 @@
     input.val("");
     disableUI();
 
+    // Generate unique message ID
+    const messageId = Date.now().toString();
+
     // Create bot message container
-    currentMessageElement = createBotMessage();
+    const { messageContent, feedbackContainer } = createBotMessage(messageId);
+    currentMessageElement = messageContent;
     let accumulatedText = "";
 
     const language = $("#language-select").val();
@@ -141,6 +176,13 @@
 
           if (done) {
             console.log("Stream complete");
+            // Add feedback buttons after message is complete
+            const feedbackButtons = createFeedbackButtons(
+              messageId,
+              userMsg,
+              accumulatedText
+            );
+            feedbackContainer.replaceWith(feedbackButtons);
             break;
           }
 
@@ -153,7 +195,6 @@
                 const data = JSON.parse(line.substring(6));
 
                 if (data.type === "content") {
-                  // Real-time streaming: immediately append each chunk
                   accumulatedText += data.chunk;
                   if (currentMessageElement) {
                     currentMessageElement.html(formatText(accumulatedText));
@@ -168,6 +209,13 @@
                     accumulatedText += "\n\n[Response stopped by user]";
                     currentMessageElement.html(formatText(accumulatedText));
                   }
+                  // Add feedback buttons even for stopped responses
+                  const feedbackButtons = createFeedbackButtons(
+                    messageId,
+                    userMsg,
+                    accumulatedText
+                  );
+                  feedbackContainer.replaceWith(feedbackButtons);
                   enableUI();
                 } else if (data.type === "error") {
                   console.log("Error received:", data.message);
@@ -200,6 +248,13 @@
             currentMessageElement.html(`<em>Error: ${error.message}</em>`);
           }
         }
+        // Add feedback buttons even for errors
+        const feedbackButtons = createFeedbackButtons(
+          messageId,
+          userMsg,
+          accumulatedText
+        );
+        feedbackContainer.replaceWith(feedbackButtons);
         enableUI();
       });
   }
@@ -210,6 +265,76 @@
       currentController.abort();
       currentController = null;
     }
+  }
+
+  // Function to create feedback buttons
+  function createFeedbackButtons(messageId, userMessage, botResponse) {
+    const feedbackContainer = $("<div>").addClass("feedback-container");
+
+    const thumbsUp = $("<button>")
+      .addClass("feedback-btn thumbs-up")
+      .attr("data-message-id", messageId)
+      .attr("data-feedback", "good")
+      .attr("title", "Good response")
+      .click(function () {
+        submitFeedback(messageId, userMessage, botResponse, "good", $(this));
+      });
+
+    const thumbsDown = $("<button>")
+      .addClass("feedback-btn thumbs-down")
+      .attr("data-message-id", messageId)
+      .attr("data-feedback", "bad")
+      .attr("title", "Bad response")
+      .click(function () {
+        submitFeedback(messageId, userMessage, botResponse, "bad", $(this));
+      });
+
+    feedbackContainer.append(thumbsUp).append(thumbsDown);
+    return feedbackContainer;
+  }
+
+  // Function to submit feedback
+  function submitFeedback(
+    messageId,
+    userMessage,
+    botResponse,
+    feedback,
+    buttonElement
+  ) {
+    // Disable both buttons and show selected state
+    const container = buttonElement.closest(".feedback-container");
+    container.find(".feedback-btn").prop("disabled", true);
+    buttonElement.addClass("selected");
+
+    // Send feedback to backend
+    fetch("/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message_id: messageId,
+        user_message: userMessage,
+        bot_response: botResponse,
+        feedback: feedback,
+        session_id: sessionId,
+        timestamp: new Date().toISOString(),
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Feedback submitted:", data);
+        // Show thank you message briefly
+        const thankYou = $("<span>")
+          .addClass("thank-you-text")
+          .text("Thank you for your feedback!");
+        container.append(thankYou);
+        setTimeout(() => thankYou.fadeOut(), 2000);
+      })
+      .catch((error) => {
+        console.error("Error submitting feedback:", error);
+        // Re-enable buttons on error
+        container.find(".feedback-btn").prop("disabled", false);
+        buttonElement.removeClass("selected");
+      });
   }
 
   function toggleView() {
