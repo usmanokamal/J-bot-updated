@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from bs4 import BeautifulSoup
+import re
 
 # Define directories
 input_dir = './Raw'
@@ -20,6 +21,13 @@ columns_to_remove = [
 def clean_html(text):
     """Remove HTML tags but keep special characters like * and #."""
     return BeautifulSoup(str(text), "html.parser").get_text(separator=" ", strip=True)
+
+def replace_jazzworld(text):
+    """Replace all variations of Jazz World/JazzWorld with SIMOSA (case-insensitive, with or without space)."""
+    if pd.isna(text):
+        return text
+    # Pattern matches: jazzworld, jazz world, Jazz World, etc.
+    return re.sub(r'jazz\s*world', 'SIMOSA', str(text), flags=re.IGNORECASE)
 
 def clean_csv(file_path):
     # Load CSV with appropriate encoding
@@ -49,7 +57,11 @@ def clean_csv(file_path):
 
     df = df.loc[:, ~df.apply(is_garbage_column)]
 
-    # Clean HTML from all text columns
+    # First: Replace all JazzWorld/Jazz World with SIMOSA in all text columns
+    for col in df.select_dtypes(include='object').columns:
+        df[col] = df[col].apply(replace_jazzworld)
+
+    # Then: Clean HTML from all text columns
     for col in df.select_dtypes(include='object').columns:
         df[col] = df[col].apply(clean_html)
 
