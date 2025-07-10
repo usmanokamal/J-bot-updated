@@ -29,6 +29,13 @@ async def chat_post(request: ChatRequest, http_request: Request):
                 # Check if client disconnected
                 if await http_request.is_disconnected():
                     print("Client disconnected, stopping response generation")
+                    #####################################
+                    disconnect_data = {
+                        "type": "error",
+                        "message": "Client disconnected before completion"
+                    }
+                    yield f"data: {json.dumps(disconnect_data)}\n\n"
+                    ######################################
                     return
                 
                 full_response += chunk

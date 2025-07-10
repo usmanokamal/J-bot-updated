@@ -518,11 +518,6 @@ body {
   height: 16px;
 }
 
-/* Web View Styles (Default) */
-.container.web-view {
-  /* Default styles already defined above */
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
