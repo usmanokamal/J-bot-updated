@@ -7,15 +7,17 @@ import json
 
 router = APIRouter()
 
+
 class ChatRequest(BaseModel):
     message: str
     session_id: str
+
 
 @router.post("/chat/")
 @router.post("/chat")
 async def chat_post(request: ChatRequest, http_request: Request):
     """Real-time streaming endpoint that respects abort signals"""
-    
+
     async def generate():
         try:
             full_response = ""
@@ -24,56 +26,45 @@ async def chat_post(request: ChatRequest, http_request: Request):
                 if await http_request.is_disconnected():
                     print("Client disconnected, stopping response generation")
                     return
-                
+
                 full_response += chunk
-                
+
                 # Send chunk as JSON for easier parsing on frontend
-                chunk_data = {
-                    "chunk": chunk,
-                    "type": "content"
-                }
+                chunk_data = {"chunk": chunk, "type": "content"}
                 yield f"data: {json.dumps(chunk_data)}\n\n"
-                
+
                 # Small delay to prevent overwhelming the client
                 await asyncio.sleep(0.01)
-            
+
             # Send completion signal
-            completion_data = {
-                "type": "complete",
-                "full_response": full_response
-            }
+            completion_data = {"type": "complete", "full_response": full_response}
             yield f"data: {json.dumps(completion_data)}\n\n"
-            
+
         except asyncio.CancelledError:
             # Handle cancellation gracefully
-            stop_data = {
-                "type": "stopped",
-                "message": "Response stopped by user"
-            }
+            stop_data = {"type": "stopped", "message": "Response stopped by user"}
             yield f"data: {json.dumps(stop_data)}\n\n"
             return
         except Exception as e:
             # Handle other exceptions
-            error_data = {
-                "type": "error",
-                "message": f"An error occurred: {str(e)}"
-            }
+            error_data = {"type": "error", "message": f"An error occurred: {str(e)}"}
             yield f"data: {json.dumps(error_data)}\n\n"
 
     return StreamingResponse(
-        generate(), 
+        generate(),
         media_type="text/plain",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-        }
+        },
     )
+
 
 @router.get("/chat/")
 async def chat_get(prompt: str, request: Request):
     """GET endpoint for streaming (keeping for compatibility)"""
-    
+
     async def generate():
         try:
             async for text in bot_chat(prompt):

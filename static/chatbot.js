@@ -51,7 +51,6 @@
   function disableUI() {
     $("#send-btn").prop("disabled", true);
     $("#user-input").prop("disabled", true);
-    $("#quick-replies button").prop("disabled", true);
     $("#stop-btn").show();
     startTypingAnimation();
   }
@@ -59,7 +58,6 @@
   function enableUI() {
     $("#send-btn").prop("disabled", false);
     $("#user-input").prop("disabled", false);
-    $("#quick-replies button").prop("disabled", false);
     $("#stop-btn").hide();
     $("#user-input").focus();
     stopTypingAnimation();
@@ -214,33 +212,6 @@
     }
   }
 
-  function sendQuickReply(message) {
-    if ($("#quick-replies button").prop("disabled")) {
-      return;
-    }
-    $("#user-input").val(message);
-    sendMessage();
-  }
-
-  function updateQuickReplies() {
-    const quickReplies = [
-      "Offers",
-      "Data Offers",
-      "Packages",
-      "B2C",
-      "Digital",
-      "Jazz Rox",
-      "Support",
-    ];
-    $("#quick-replies").empty();
-    quickReplies.forEach((reply) => {
-      const button = $("<button>")
-        .text(reply)
-        .click(() => sendQuickReply(reply));
-      $("#quick-replies").append(button);
-    });
-  }
-
   function toggleView() {
     const container = document.querySelector(".container");
     const webIcon = document.getElementById("web-icon");
@@ -264,14 +235,11 @@
   // Global functions
   window.sendMessage = sendMessage;
   window.stopResponse = stopResponse;
-  window.sendQuickReply = sendQuickReply;
-  window.updateQuickReplies = updateQuickReplies;
   window.toggleView = toggleView;
 
   $(document).ready(function () {
     console.log("Document ready, chatbot.js loaded!");
     $("#stop-btn").hide();
-    updateQuickReplies();
 
     // Initialize view state
     $(".container").addClass("web-view");
