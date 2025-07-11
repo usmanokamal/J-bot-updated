@@ -1,7 +1,8 @@
 import asyncio
 from fastapi import APIRouter, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from app.bot import chat as bot_chat
+from app.bot import translate_to_english, index
 from pydantic import BaseModel
 import json
 import csv
@@ -26,6 +27,11 @@ class FeedbackRequest(BaseModel):
     timestamp: str
 
 
+class TranslateRequest(BaseModel):
+    text: str
+    from_lang: str
+    to_lang: str
+
 @router.post("/chat/")
 @router.post("/chat")
 async def chat_post(request: ChatRequest, http_request: Request):
@@ -38,6 +44,13 @@ async def chat_post(request: ChatRequest, http_request: Request):
                 # Check if client disconnected
                 if await http_request.is_disconnected():
                     print("Client disconnected, stopping response generation")
+                    #####################################
+                    disconnect_data = {
+                        "type": "error",
+                        "message": "Client disconnected before completion"
+                    }
+                    yield f"data: {json.dumps(disconnect_data)}\n\n"
+                    ######################################
                     return
 
                 full_response += chunk

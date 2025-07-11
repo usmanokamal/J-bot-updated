@@ -129,6 +129,15 @@
 
   // Function to send a message with real-time streaming
   function sendMessage() {
+    let responseTimeout = setTimeout(() => {
+      if ($("#send-btn").prop("disabled")) {
+        if (currentMessageElement) {
+          currentMessageElement.html("<em>Error: Response timed out. Please try again.</em>");
+        }
+        enableUI();
+      }
+    }, 60000); // 1 minute timeout
+
     console.log("sendMessage called");
     const input = $("#user-input");
     const userMsg = input.val().trim();
@@ -203,6 +212,7 @@
                 } else if (data.type === "complete") {
                   console.log("Response complete");
                   enableUI();
+                  clearTimeout(responseTimeout);
                 } else if (data.type === "stopped") {
                   console.log("Response stopped");
                   if (currentMessageElement) {
@@ -217,6 +227,7 @@
                   );
                   feedbackContainer.replaceWith(feedbackButtons);
                   enableUI();
+                  clearTimeout(responseTimeout);
                 } else if (data.type === "error") {
                   console.log("Error received:", data.message);
                   if (currentMessageElement) {
@@ -225,6 +236,7 @@
                     );
                   }
                   enableUI();
+                  clearTimeout(responseTimeout);
                 }
               } catch (e) {
                 console.log("Error parsing JSON:", e);
@@ -256,6 +268,7 @@
         );
         feedbackContainer.replaceWith(feedbackButtons);
         enableUI();
+        clearTimeout(responseTimeout);
       });
   }
 
