@@ -148,8 +148,6 @@ async def submit_feedback(request: FeedbackRequest):
     except Exception as e:
         return {"status": "error", "message": f"Failed to store feedback: {str(e)}"}
 
-
-def detect_language(text):
     """Improved language detection for English vs Roman Urdu"""
     import re
 

@@ -37,6 +37,7 @@ DEFAULT_RESPONSES = [
     "Hi there! What would you like to know?",
     "Greetings! How can I assist you?",
     "Hello! I'm here to answer your questions. What can I help you with?",
+    "If the question or query is asked in Roman Urdu (Urdu written in English alphabet) reply in Roman Urdu (Urdu written in English alphabet) NOT in english",
 ]
 
 MAX_MESSAGES = 20
