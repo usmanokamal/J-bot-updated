@@ -1,3 +1,5 @@
+"""app/api.py file for FastAPI application handling chat and feedback endpoints."""
+
 import asyncio
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -9,6 +11,8 @@ import csv
 import os
 from datetime import datetime
 from pydantic import BaseModel
+import re
+from deep_translator import GoogleTranslator
 
 router = APIRouter()
 
@@ -27,11 +31,6 @@ class FeedbackRequest(BaseModel):
     timestamp: str
 
 
-class TranslateRequest(BaseModel):
-    text: str
-    from_lang: str
-    to_lang: str
-
 @router.post("/chat/")
 @router.post("/chat")
 async def chat_post(request: ChatRequest, http_request: Request):
@@ -47,7 +46,7 @@ async def chat_post(request: ChatRequest, http_request: Request):
                     #####################################
                     disconnect_data = {
                         "type": "error",
-                        "message": "Client disconnected before completion"
+                        "message": "Client disconnected before completion",
                     }
                     yield f"data: {json.dumps(disconnect_data)}\n\n"
                     ######################################
@@ -148,3 +147,187 @@ async def submit_feedback(request: FeedbackRequest):
 
     except Exception as e:
         return {"status": "error", "message": f"Failed to store feedback: {str(e)}"}
+
+
+def detect_language(text):
+    """Improved language detection for English vs Roman Urdu"""
+    import re
+
+    # Common Roman Urdu words/patterns
+    roman_urdu_indicators = [
+        "aap",
+        "hai",
+        "hain",
+        "kar",
+        "ke",
+        "ki",
+        "ko",
+        "se",
+        "me",
+        "main",
+        "yeh",
+        "woh",
+        "kya",
+        "kyun",
+        "kab",
+        "kahan",
+        "kaisa",
+        "kitna",
+        "mera",
+        "tera",
+        "hamara",
+        "tumhara",
+        "unka",
+        "iska",
+        "uska",
+        "nahi",
+        "nahin",
+        "bilkul",
+        "bohot",
+        "bahut",
+        "thoda",
+        "zyada",
+        "paani",
+        "pani",
+        "khana",
+        "ghar",
+        "kaam",
+        "waqt",
+        "time",
+        "saal",
+        "mahina",
+        "din",
+        "raat",
+        "subah",
+        "sham",
+        "achha",
+        "bura",
+        "sundar",
+        "khoobsurat",
+        "mushkil",
+        "aasan",
+        "shukriya",
+        "maaf",
+        "sorry",
+        "thanks",
+        "please",
+        "ji",
+        "han",
+        "haan",
+    ]
+
+    # Convert to lowercase for checking
+    text_lower = text.lower()
+
+    # Count Roman Urdu indicators
+    roman_urdu_count = sum(1 for word in roman_urdu_indicators if word in text_lower)
+
+    # Check for English patterns
+    english_words = re.findall(r"\b[a-zA-Z]+\b", text)
+    total_words = len(text.split())
+
+    if total_words == 0:
+        return "english"
+
+    # If we found significant Roman Urdu indicators, likely Roman Urdu
+    if roman_urdu_count >= 2 or (roman_urdu_count >= 1 and total_words <= 5):
+        return "roman_urdu"
+
+    # Otherwise, check English ratio
+    english_ratio = len(english_words) / total_words
+    return "english" if english_ratio > 0.6 else "roman_urdu"
+
+
+async def translate_with_openai(text: str, target_language: str) -> str:
+    """
+    Use OpenAI to translate text to/from Roman Urdu with better quality
+    """
+    try:
+        from llama_index.llms.openai import OpenAI
+
+        # Initialize OpenAI model
+        translator_llm = OpenAI(model="gpt-4o-mini", temperature=0.1)
+
+        if target_language == "roman_urdu":
+            # English to Roman Urdu
+            translation_prompt = f"""
+            Translate the following English text to Roman Urdu (Urdu written in English alphabet).
+            Use natural, conversational Roman Urdu that Pakistani people commonly use.
+            
+            Guidelines:
+            - Write in English alphabet only (no Urdu script)
+            - Use natural Pakistani Roman Urdu style
+            - Keep technical terms in English if commonly used
+            - Make it sound natural and conversational
+            
+            English text: {text}
+            
+            Roman Urdu translation:
+            """
+        else:
+            # Roman Urdu to English
+            translation_prompt = f"""
+            Translate the following Roman Urdu text to clear, natural English.
+            
+            Roman Urdu text: {text}
+            
+            English translation:
+            """
+
+        response = await translator_llm.acomplete(translation_prompt)
+        translated_text = response.text.strip()
+
+        # Clean up the response (remove any extra formatting)
+        if translated_text.startswith('"') and translated_text.endswith('"'):
+            translated_text = translated_text[1:-1]
+
+        return translated_text
+
+    except Exception as e:
+        print(f"OpenAI translation error: {e}")
+        return text  # Return original if translation fails
+
+
+# Updated translate_text function to use OpenAI
+async def translate_text(text, target_language):
+    """Enhanced translation using OpenAI for better Roman Urdu quality"""
+    try:
+        return await translate_with_openai(text, target_language)
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return text  # Return original if translation fails
+
+
+# Updated translate endpoint to be async
+@router.post("/translate")
+async def translate_message(request: dict):
+    """Translate message between English and Roman Urdu using OpenAI"""
+    try:
+        text = request.get("text", "")
+        target_language = request.get("target_language", "english")
+
+        translated_text = await translate_text(text, target_language)
+
+        return {
+            "status": "success",
+            "original_text": text,
+            "translated_text": translated_text,
+            "target_language": target_language,
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Translation failed: {str(e)}"}
+    """Translate message between English and Roman Urdu"""
+    try:
+        text = request.get("text", "")
+        target_language = request.get("target_language", "english")
+
+        translated_text = translate_text(text, target_language)
+
+        return {
+            "status": "success",
+            "original_text": text,
+            "translated_text": translated_text,
+            "target_language": target_language,
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Translation failed: {str(e)}"}

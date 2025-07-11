@@ -239,3 +239,68 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
     font-size: 10px;
   }
 }
+
+/* Add these styles to your chatbot.css */
+
+
+.translate-btn {
+  background: linear-gradient(135deg, #1384967a 0%, #117b8b87 100%);
+  color: white;
+  border: 1px solid rgba(23, 162, 184, 0.3);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  font-style: ;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  min-width: 35px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.translate-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(23, 162, 184, 0.3);
+}
+
+.translate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.translate-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile responsive */
+.container.mobile-view .translate-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  min-width: 30px;
+  height: 24px;
+}
+
+@media (max-width: 768px) {
+  .translate-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    min-width: 32px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .translate-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+    min-width: 28px;
+    height: 22px;
+  }
+}

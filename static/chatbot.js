@@ -132,7 +132,9 @@
     let responseTimeout = setTimeout(() => {
       if ($("#send-btn").prop("disabled")) {
         if (currentMessageElement) {
-          currentMessageElement.html("<em>Error: Response timed out. Please try again.</em>");
+          currentMessageElement.html(
+            "<em>Error: Response timed out. Please try again.</em>"
+          );
         }
         enableUI();
       }
@@ -284,6 +286,14 @@
   function createFeedbackButtons(messageId, userMessage, botResponse) {
     const feedbackContainer = $("<div>").addClass("feedback-container");
 
+    // Translation button
+    const translateBtn = createTranslationButton(
+      messageId,
+      botResponse,
+      feedbackContainer
+    );
+
+    // Existing feedback buttons
     const thumbsUp = $("<button>")
       .addClass("feedback-btn thumbs-up")
       .attr("data-message-id", messageId)
@@ -302,7 +312,7 @@
         submitFeedback(messageId, userMessage, botResponse, "bad", $(this));
       });
 
-    feedbackContainer.append(thumbsUp).append(thumbsDown);
+    feedbackContainer.append(translateBtn).append(thumbsUp).append(thumbsDown);
     return feedbackContainer;
   }
 
@@ -348,6 +358,140 @@
         container.find(".feedback-btn").prop("disabled", false);
         buttonElement.removeClass("selected");
       });
+  }
+  function detectLanguage(text) {
+    // Enhanced language detection
+    const romanUrduWords = [
+      "aap",
+      "hai",
+      "hain",
+      "kar",
+      "ke",
+      "ki",
+      "ko",
+      "se",
+      "me",
+      "main",
+      "yeh",
+      "woh",
+      "kya",
+      "kyun",
+      "kab",
+      "kahan",
+      "kaisa",
+      "kitna",
+      "mera",
+      "tera",
+      "hamara",
+      "tumhara",
+      "nahi",
+      "nahin",
+      "bahut",
+      "shukriya",
+      "maaf",
+      "ji",
+      "han",
+      "haan",
+      "achha",
+      "bura",
+    ];
+
+    const textLower = text.toLowerCase();
+    const romanUrduCount = romanUrduWords.filter((word) =>
+      textLower.includes(word)
+    ).length;
+
+    if (
+      romanUrduCount >= 2 ||
+      (romanUrduCount >= 1 && text.split(" ").length <= 5)
+    ) {
+      return "roman_urdu";
+    }
+
+    const englishWords = text.match(/\b[a-zA-Z]+\b/g) || [];
+    const totalWords = text.split(/\s+/).length;
+
+    if (totalWords === 0) return "english";
+
+    const englishRatio = englishWords.length / totalWords;
+    return englishRatio > 0.6 ? "english" : "roman_urdu";
+  }
+
+  function createTranslationButton(messageId, text, container) {
+    const translateBtn = $("<button>")
+      .addClass("translate-btn")
+      .attr("data-message-id", messageId)
+      .attr("data-original-bot-response", text) // Store original bot response
+      .attr("data-current-lang", "english") // Bot always responds in English initially
+      .attr("data-translated-text", "") // Will store translated version
+      .attr("title", "Translate to Roman Urdu")
+      .html("RomanUR")
+      .click(function () {
+        translateMessage($(this));
+      });
+
+    return translateBtn;
+  }
+
+  function translateMessage(buttonElement) {
+    const messageId = buttonElement.attr("data-message-id");
+    const originalBotResponse = buttonElement.attr(
+      "data-original-bot-response"
+    );
+    const currentLang = buttonElement.attr("data-current-lang");
+    const translatedText = buttonElement.attr("data-translated-text");
+
+    // Show loading state
+    buttonElement.html("...").prop("disabled", true);
+
+    // Find the message content element
+    const messageContent = buttonElement
+      .closest(".bot-message-wrapper")
+      .find(".bot-content-container span");
+
+    if (currentLang === "english") {
+      // Translate to Roman Urdu
+      fetch("/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: originalBotResponse,
+          target_language: "roman_urdu",
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            // Update message content with translated text
+            messageContent.html(formatText(data.translated_text));
+
+            // Update button state
+            buttonElement
+              .html("EN")
+              .attr("data-current-lang", "roman_urdu")
+              .attr("data-translated-text", data.translated_text)
+              .attr("title", "Show Original English")
+              .prop("disabled", false);
+          } else {
+            console.error("Translation failed:", data.message);
+            buttonElement.html("RomanUR").prop("disabled", false);
+          }
+        })
+        .catch((error) => {
+          console.error("Translation error:", error);
+          buttonElement.html("RomanUR").prop("disabled", false);
+        });
+    } else {
+      // Show original English response (no API call needed)
+      messageContent.html(formatText(originalBotResponse));
+
+      // Update button state
+      buttonElement
+        .html("RomanUR")
+        .attr("data-current-lang", "english")
+        .attr("title", "Translate to Roman Urdu")
+        .prop("disabled", false);
+    }
   }
 
   function toggleView() {

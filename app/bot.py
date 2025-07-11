@@ -1,3 +1,5 @@
+"""app/bot.py"""
+
 from llama_index.core.agent import ReActAgent
 from dotenv import load_dotenv
 from llama_index.llms.openai import OpenAI
