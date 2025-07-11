@@ -25,7 +25,7 @@
 
       const contentContainer = $("<div>").addClass("bot-content-container");
       const logo = $("<img>")
-        .attr("src", "/static/assets/jazzbot-logo.png")
+        .attr("src", "/static/assets/Jazz-Company-logo-.png")
         .attr("alt", "Jazz Logo")
         .css({ width: "24px", height: "24px", marginRight: "10px" });
 
@@ -106,7 +106,7 @@
 
     const contentContainer = $("<div>").addClass("bot-content-container");
     const logo = $("<img>")
-      .attr("src", "/static/assets/jazzbot-logo.png")
+      .attr("src", "/static/assets/Jazz-Company-logo-.png")
       .attr("alt", "Jazz Logo")
       .css({ width: "24px", height: "24px", marginRight: "10px" });
 

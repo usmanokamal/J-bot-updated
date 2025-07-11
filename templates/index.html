@@ -25,54 +25,8 @@
                 <path d="M8 5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </button>
-        <div class="robot-area" id="robotArea">
-            <svg class="robot-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                        <feMerge> 
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                    </filter>
-                </defs>
-                
-                <!-- Robot Body -->
-                <rect x="60" y="80" width="80" height="100" rx="10" fill="#ff0000" stroke="#000" stroke-width="2"/>
-                
-                <!-- Robot Head -->
-                <rect x="70" y="30" width="60" height="60" rx="8" fill="#ff0000" stroke="#000" stroke-width="2"/>
-                
-                <!-- Eyes -->
-                <circle cx="85" cy="50" r="8" fill="#ffc107" class="glow" filter="url(#glow)"/>
-                <circle cx="115" cy="50" r="8" fill="#ffc107" class="glow" filter="url(#glow)"/>
-                
-                <!-- Mouth -->
-                <rect x="90" y="65" width="20" height="8" rx="4" fill="#000"/>
-                
-                <!-- Antenna -->
-                <line x1="100" y1="30" x2="100" y2="15" stroke="#000" stroke-width="2"/>
-                <circle cx="100" cy="15" r="4" fill="#ffc107" class="glow" filter="url(#glow)"/>
-                
-                <!-- Arms -->
-                <rect x="30" y="100" width="30" height="15" rx="7" fill="#ff0000" stroke="#000" stroke-width="2"/>
-                <rect x="140" y="100" width="30" height="15" rx="7" fill="#ff0000" stroke="#000" stroke-width="2"/>
-                
-                <!-- Gear on chest -->
-                <g class="gear" transform="translate(100,130)">
-                    <circle r="12" fill="#ffc107" stroke="#000" stroke-width="2"/>
-                    <polygon points="0,-15 5,-5 15,0 5,5 0,15 -5,5 -15,0 -5,-5" fill="#ffc107"/>
-                </g>
-                
-                <!-- Legs -->
-                <rect x="75" y="180" width="15" height="30" rx="7" fill="#ff0000" stroke="#000" stroke-width="2"/>
-                <rect x="110" y="180" width="15" height="30" rx="7" fill="#ff0000" stroke="#000" stroke-width="2"/>
-            </svg>
-            
-            <div class="robot-text">
-                <span class="robot-jazz" style="font-size: 20px;">JAZZ<span class="robot-bot" style="font-size: 20px;">BOT</span></span>
-                <span class="robot-jazz" >KMS</span>
-            </div>
+        <div class="header-area">
+            <h1 class="app-title">JazzBot - KMS</h1>
         </div>
         <div class="chat-box" id="chat-box">
             <!-- Initial bot message will be added by JavaScript -->

@@ -9,9 +9,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.05) 10px, rgba(255, 255, 255, 0.05) 20px); animation: shimmer 3s linear infinite; }
 @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 .main-title { font-size: 2.5em; font-weight: 800; margin: 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); letter-spacing: 3px; position: relative; z-index: 1; }
-.jazz-text { color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
-.bot-text { color: #212529; text-shadow: 0 0 10px rgba(33, 37, 41, 0.8); }
-.kms-text { color: #ffffff; font-size: 0.8em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
+.header-area{text-align: center; font-size: 1em;}
 .header-underline { height: 4px; background: linear-gradient(90deg, transparent, white, transparent); margin-top: 10px; border-radius: 2px; animation: pulse-line 2s ease-in-out infinite; position: relative; z-index: 1; }
 @keyframes pulse-line { 0%, 100% { opacity: 0.6; transform: scaleX(0.8); } 50% { opacity: 1; transform: scaleX(1); } }
 .chat-box { flex: 1; overflow-y: auto; background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%); display: flex; flex-direction: column; padding: 20px; margin: 15px; border-radius: 15px; box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1); position: relative; }
@@ -23,16 +21,8 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .bot img { width: 24px; height: 24px; margin-right: 10px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .user { background: linear-gradient(135deg, #ff0000 0%, #dc3545 100%); color: white; align-self: flex-end; border-top-right-radius: 5px; margin-left: auto; border: 2px solid rgba(255, 0, 0, 0.3); }
 .user::before { content: ''; position: absolute; top: -1px; right: -10px; width: 0; height: 0; border-top: 10px solid #ff0000; border-right: 10px solid transparent; border-bottom: 10px solid transparent; }
-.robot-area { display: flex; justify-content: center; align-items: center; height: 60px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); padding: 10px; gap: 15px; margin: 10px 15px; border-radius: 15px; backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.2); }
-.robot-svg { width: 50px; height: 50px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2)); }
-.robot-thinking .gear { animation: rotate 1.5s linear infinite; }
-.robot-thinking .glow { animation: pulse 1s ease-in-out infinite; }
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 0.6; filter: brightness(1); } 50% { opacity: 1; filter: brightness(1.5); } }
-.robot-text { font-family: 'Courier New', Courier, monospace; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
-.robot-jazz { color: #ff0000; text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
-.robot-bot { color: #ffc107; text-shadow: 0 0 10px rgba(255, 193, 7, 0.5); }
-.robot-kms { color: #ff0707; text-shadow: 0 0 10px rgba(255, 193, 7, 0.5); }
 .input-area { display: flex; flex-direction: column; gap: 15px; padding: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%); border-radius: 0 0 20px 20px; backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.3); }
 .input-container { display: flex; gap: 15px; align-items: center; }
 #user-input { flex: 1; padding: 15px 20px; border: 2px solid #ffc107; border-radius: 30px; font-size: 16px; outline: none; transition: all 0.3s ease; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); }
@@ -48,10 +38,8 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 #stop-btn { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
 #stop-btn:hover { background: linear-gradient(135deg, #c82333 0%, #bd2130 100%); }
 .container.mobile-view { max-width: 400px; height: 85vh; border-radius: 15px; }
-.container.mobile-view .robot-area { height: 50px; gap: 10px; padding: 8px; margin: 8px 10px; }
-.container.mobile-view .robot-svg { width: 35px; height: 35px; }
-.container.mobile-view .robot-text { font-size: 12px; letter-spacing: 1px; }
 .container.mobile-view .chat-box { margin: 10px; padding: 15px; }
+.container.mobile-view .header-area{text-align: center; font-size: 0.8em;}
 .container.mobile-view .chat-bubble { padding: 10px 15px; max-width: 85%; font-size: 14px; }
 .container.mobile-view .bot img { width: 18px; height: 18px; margin-right: 8px; }
 .container.mobile-view .input-area { padding: 15px; gap: 10px; }
@@ -61,8 +49,8 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .container.mobile-view .btn { padding: 12px 20px; font-size: 12px; }
 .container.mobile-view .view-toggle { top: 10px; right: 10px; width: 35px; height: 35px; }
 .container.mobile-view .toggle-icon { width: 16px; height: 16px; }
-@media (max-width: 768px) { .container { padding: 10px; } .chat-box { height: 400px; padding: 10px; } .chat-bubble { padding: 8px 12px; max-width: 85%; font-size: 14px; } .bot img { width: 16px; height: 16px; margin-right: 6px; } .robot-area { height: 45px; gap: 8px; padding: 6px; } .robot-svg { width: 30px; height: 30px; } .robot-text { font-size: 10px; } .language-selector .form-select { width: 100px; font-size: 12px; padding: 6px 10px; } #quick-replies { gap: 6px; padding: 8px 0; } #quick-replies button { padding: 4px 8px; font-size: 10px; } #user-input { font-size: 14px; padding: 10px 14px; } .btn { padding: 10px 16px; font-size: 12px; } .view-toggle { top: 8px; right: 8px; width: 38px; height: 38px; } .toggle-icon { width: 18px; height: 18px; } }
-@media (max-width: 480px) { .container { padding: 5px; } .chat-box { height: 350px; padding: 8px; } .chat-bubble { padding: 6px 10px; max-width: 90%; font-size: 12px; } .bot img { width: 14px; height: 14px; margin-right: 5px; } .robot-area { height: 40px; gap: 6px; padding: 5px; } .robot-svg { width: 25px; height: 25px; } .robot-text { font-size: 8px; } .language-selector .form-select { width: 90px; font-size: 11px; padding: 5px 8px; } #quick-replies { gap: 4px; padding: 6px 0; } #quick-replies button { padding: 3px 6px; font-size: 9px; } .input-container { flex-direction: column; gap: 8px; } #user-input { font-size: 13px; padding: 8px 12px; } .btn { padding: 8px 14px; font-size: 11px; width: 100%; } .view-toggle { top: 5px; right: 5px; width: 32px; height: 32px; } .toggle-icon { width: 14px; height: 14px; } }
+@media (max-width: 768px) { .container { padding: 10px; } .chat-box { height: 400px; padding: 10px; } .chat-bubble { padding: 8px 12px; max-width: 85%; font-size: 14px; } .bot img { width: 16px; height: 16px; margin-right: 6px; } .language-selector .form-select { width: 100px; font-size: 12px; padding: 6px 10px; }  #user-input { font-size: 14px; padding: 10px 14px; } .btn { padding: 10px 16px; font-size: 12px; } .view-toggle { top: 8px; right: 8px; width: 38px; height: 38px; } .toggle-icon { width: 18px; height: 18px; } }
+@media (max-width: 480px) { .container { padding: 5px; } .chat-box { height: 350px; padding: 8px; } .chat-bubble { padding: 6px 10px; max-width: 90%; font-size: 12px; } .bot img { width: 14px; height: 14px; margin-right: 5px; }  .language-selector .form-select { width: 90px; font-size: 11px; padding: 5px 8px; } .input-container { flex-direction: column; gap: 8px; } #user-input { font-size: 13px; padding: 8px 12px; } .btn { padding: 8px 14px; font-size: 11px; width: 100%; } .view-toggle { top: 5px; right: 5px; width: 32px; height: 32px; } .toggle-icon { width: 14px; height: 14px; } }
 .chat-box::-webkit-scrollbar { width: 8px; }
 .chat-box::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .chat-box::-webkit-scrollbar-thumb { background: #ffc107; border-radius: 10px; }
